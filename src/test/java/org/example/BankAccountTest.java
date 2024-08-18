@@ -40,12 +40,14 @@ class BankAccountTest {
     }
 
     @ParameterizedTest
-    @ValueSource(doubles = {1000.0, 430.25, 532.11, 8594.99, 0, Double.MAX_VALUE})
+    @ValueSource(doubles = {1000.0, 430.25, 532.11, 8594.99, 0, 0.01, Double.MAX_VALUE})
     void shouldGetBalanceGreaterThanOrEqualTo0(double balance) {
         account = new BankAccount(balance);
 
-        double returnedBalance = account.getBalance();
+        double actualBalance = account.getBalance();
 
-        assertTrue(returnedBalance >= 0);
+        assertThat(actualBalance)
+                .isGreaterThanOrEqualTo(0)
+                .isEqualTo(balance);
     }
 }

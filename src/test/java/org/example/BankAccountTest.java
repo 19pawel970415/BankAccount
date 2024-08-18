@@ -2,13 +2,14 @@ package org.example;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvFileSource;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.*;
+
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BankAccountTest {
@@ -53,8 +54,57 @@ class BankAccountTest {
         assertEquals(Double.valueOf(balanceAfter), account.getBalance());
     }
 
+    @ParameterizedTest
+    @MethodSource("provideArguments")
+    void shouldWithdrawGreaterThanOrEqualTo0AndSmallerThanOrEqualToBalance(double balanceBefore, double withdrawal, double balanceAfter) {
+        account = new BankAccount(balanceBefore);
+
+        account.withdraw(withdrawal);
+
+        assertEquals(balanceAfter, account.getBalance());
+    }
+
+    static Stream<Arguments> provideArguments() {
+        return Stream.of(
+                Arguments.of(0.0, 0.0, 0.0),
+                Arguments.of(Double.MAX_VALUE, Double.MAX_VALUE, 0.0),
+                Arguments.of(5923926.9, 926.5, 5923000.4),
+                Arguments.of(0.02, 0.01, 0.01)
+        );
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(Provider.class)
+    void shouldWithdrawGreaterThanOrEqualTo0AndSmallerThanOrEqualToBalanceUsingClass(double balanceBefore, double withdrawal, double balanceAfter) {
+        account = new BankAccount(balanceBefore);
+
+        account.withdraw(withdrawal);
+
+        assertEquals(balanceAfter, account.getBalance());
+    }
+
     @Test
-    void withdraw() {
+    void shouldThrowIllegalArgumentExceptionWhenWithdrawalSmallerThat0() {
+        account = new BankAccount(0);
+
+        final IllegalArgumentException actualException = assertThrows(IllegalArgumentException.class, () -> account.withdraw(-0.01));
+
+
+
+        assertThat(actualException)
+                .isExactlyInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Withdrawal amount cannot be negative")
+                .hasNoCause();
+    }
+
+    @Test
+    void shouldThrowIllegalStateExceptionWhenWithdrawalGreaterThanBalance() {
+        account = new BankAccount(100);
+
+        assertThatThrownBy(() -> account.withdraw(100.01))
+                .isExactlyInstanceOf(IllegalStateException.class)
+                .hasMessage("Insufficient funds")
+                .hasNoCause();
     }
 
     @ParameterizedTest
